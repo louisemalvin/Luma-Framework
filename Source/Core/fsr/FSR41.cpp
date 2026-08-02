@@ -5,6 +5,7 @@
 #include "D3D11On12Bridge.h"
 
 #include <Windows.h>
+#include <include/reshade.hpp>
 
 #include <array>
 #include <cstdarg>
@@ -31,6 +32,7 @@ namespace FidelityFX
          OutputDebugStringA(message);
          OutputDebugStringA("\n");
          printf_s("%s\n", message);
+         reshade::log::message(reshade::log::level::warning, message);
       }
 
       void FSR41ApiMessage(std::uint32_t type, const wchar_t* wide_message)
@@ -399,7 +401,7 @@ namespace FidelityFX
       {
          custom_data->context_desc.flags |= EnableMotionVectorsJitterCancellation;
       }
-#if DEVELOPMENT
+#if DEVELOPMENT || TEST
       custom_data->context_desc.flags |= EnableDebugChecking;
       custom_data->context_desc.fp_message = FSR41ApiMessage;
 #endif
@@ -419,6 +421,14 @@ namespace FidelityFX
       custom_data->backend_desc.header.type = CreateContextDescTypeBackendD3D12;
       custom_data->backend_desc.header.pNext = nullptr;
       custom_data->backend_desc.device = custom_data->bridge.GetD3D12Device();
+
+      LogFsr41(
+         "FSR4.1 context request: render=%ux%u output=%ux%u flags=0x%08x",
+         custom_data->context_desc.max_render_size.width,
+         custom_data->context_desc.max_render_size.height,
+         custom_data->context_desc.max_upscale_size.width,
+         custom_data->context_desc.max_upscale_size.height,
+         custom_data->context_desc.flags);
 
       const ReturnCode result = custom_data->provider.create_context(
          &custom_data->context,
