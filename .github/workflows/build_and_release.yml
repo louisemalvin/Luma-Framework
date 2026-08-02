@@ -28,9 +28,10 @@ jobs:
 
     - name: Build GBFR Test-Release x64
       run: >-
-        msbuild Luma.sln /t:"Granblue Fantasy Relink"
+        msbuild "Source\Games\Granblue Fantasy Relink\Granblue Fantasy Relink.vcxproj"
         /p:Configuration=Test-Release /p:Platform=x64
-        /p:DefineConstants="REMOTE_BUILD=1" /m
+        /p:SolutionName=Luma /p:SolutionDir="$env:GITHUB_WORKSPACE\"
+        /p:DefineConstants="REMOTE_BUILD=1" /p:PlatformToolset=v145 /m
 
     - name: Package GBFR
       shell: pwsh
