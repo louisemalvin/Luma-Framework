@@ -18,6 +18,7 @@ namespace SR
 		Auto,
 		DLSS,
 		FSR_3,
+		FSR_4_1,
 	};
 
 	// Put these in order of preference (most preferred first). For automatic selection.
@@ -25,6 +26,7 @@ namespace SR
 	{
 		DLSS,
 		FSR,
+		FSR4_1,
 		None = -1
 	};
 
@@ -40,6 +42,8 @@ namespace SR
 			return type == Type::DLSS;
 		case SR::UserType::FSR_3:
 			return type == Type::FSR;
+		case SR::UserType::FSR_4_1:
+			return type == Type::FSR4_1;
 		}
 		return false;
 	}
@@ -208,5 +212,7 @@ namespace SR
 		
 		// Whether the implementation leaves the state dirty compared to when it begun
 		virtual bool NeedsStateRestoration() const { return false; }
+
+		virtual const char* GetBackendName(const SR::InstanceData* data) const { return "SR"; }
 	};
 }

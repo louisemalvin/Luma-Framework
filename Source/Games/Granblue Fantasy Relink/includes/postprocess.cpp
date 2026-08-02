@@ -1189,7 +1189,9 @@ static void RunLatePostProcessPasses(
                trace_draw_call_data.command_list = native_device_context;
                trace_draw_call_data.custom_name = device_data.sr_type == SR::Type::DLSS
                                                      ? "DLSS-SR"
-                                                     : "FSR-SR";
+                                                     : device_data.sr_type == SR::Type::FSR4_1
+                                                        ? sr_implementations[device_data.sr_type]->GetBackendName(sr_instance_data)
+                                                        : "FSR-SR";
                GetResourceInfo(game_device_data.sr_output_color.get(), trace_draw_call_data.rt_size[0], trace_draw_call_data.rt_format[0], &trace_draw_call_data.rt_type_name[0], &trace_draw_call_data.rt_hash[0]);
                cmd_list_data.trace_draw_calls_data.insert(cmd_list_data.trace_draw_calls_data.end() - 1, trace_draw_call_data);
             }

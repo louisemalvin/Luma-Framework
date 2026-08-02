@@ -494,7 +494,7 @@ float4 main(float4 pos : SV_Position) : SV_Target0
 		color.rgb = ColorGradingLUTTransferFunctionOut(color.rgb, LUT_EXTRAPOLATION_TRANSFER_FUNCTION_SRGB, false);
 #endif // POST_PROCESS_SPACE_TYPE == 1
 
-#if 0 // For linux support (somehow scRGB is not interpreted as linear when in SDR) //TODOFT4: expose?
+#if 1 // Linux/Wine SDR output: scRGB is not interpreted as linear by the display path.
 		color.rgb = linear_to_sRGB_gamma(color.rgb, GCT_NONE);
 #endif
 	}

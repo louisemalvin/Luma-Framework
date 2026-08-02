@@ -10,5 +10,8 @@
     <ClInclude Include="includes\cbuffers.h" />
     <ClInclude Include="includes\safetyhook.hpp" />
     <ClInclude Include="includes\Zydis.h" />
+    <ClInclude Include="..\..\Core\fsr\D3D11On12Bridge.h" />
+    <ClInclude Include="..\..\Core\fsr\FSR41.h" />
+    <ClInclude Include="..\..\Core\fsr\FSR41Api.h" />
   </ItemGroup>
 </Project>
