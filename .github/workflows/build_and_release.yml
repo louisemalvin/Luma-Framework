@@ -21,7 +21,10 @@ jobs:
       uses: microsoft/setup-msbuild@v1.1.2
 
     - name: Build ReShade x64 Release
-      run: msbuild "Source\External\reshade\ReShade.sln" /p:Configuration=Release /p:Platform="64-bit"
+      run: >-
+        msbuild "Source\External\reshade\ReShade.sln"
+        /p:Configuration=Release /p:Platform="64-bit"
+        /p:PlatformToolset=v145
 
     - name: Build GBFR Test-Release x64
       run: >-
