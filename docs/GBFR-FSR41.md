@@ -26,11 +26,15 @@ either the game directory or its `Luma/` subdirectory. The loader checks these
 names:
 
 - `amd_fidelityfx_loader_dx12.dll`
+- `amd_fidelityfx_dx12.dll` (the loader filename shipped by the current GBFR
+  distribution)
 - `amd_fidelityfx_upscaler_dx12.dll`
 
-These are a provider pair, not interchangeable alternatives. The loader DLL
-must be able to load the matching upscaler effect DLL from the same provider
-installation. Do not rename or mix versions of the two files.
+The first two names are loader alternatives, not separate providers. The
+current GBFR loader's PE internal name is `amd_fidelityfx_loader_dx12.dll`, but
+the file on disk is `amd_fidelityfx_dx12.dll`. The loader must be able to load
+the matching upscaler effect DLL from the same provider installation. Do not
+rename or mix versions of the two files.
 
 For a non-standard location, set `LUMA_FSR41_PROVIDER` to the absolute path of
 the loader DLL before starting the game, with the matching effect DLL beside

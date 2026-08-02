@@ -65,8 +65,12 @@ namespace FidelityFX
             }
             else
             {
-               const std::array<const wchar_t*, 2> names = {
+               const std::array<const wchar_t*, 3> names = {
                   L"amd_fidelityfx_loader_dx12.dll",
+                  // GBFR's current distribution ships the same loader under
+                  // this shorter filename; its PE internal name is the one
+                  // above.
+                  L"amd_fidelityfx_dx12.dll",
                   L"amd_fidelityfx_upscaler_dx12.dll",
                };
 
