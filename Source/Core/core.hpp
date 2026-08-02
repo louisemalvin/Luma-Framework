@@ -2479,6 +2479,12 @@ namespace
       {
          selected_sr_implementation = true;
          device_data.sr_type = SR::Type::FSR;
+         {
+            const std::unique_lock lock_reshade(s_mutex_reshade);
+            sr_user_type = SR::UserType::FSR_3;
+            reshade::set_config_value(nullptr, NAME, "SRUserType", static_cast<int>(sr_user_type));
+         }
+         reshade::log::message(reshade::log::level::warning, "Luma: FSR4.1 unavailable; switched Super Resolution selection to FSR 3");
       }
       if (device_data.sr_type == SR::Type::None)
       {

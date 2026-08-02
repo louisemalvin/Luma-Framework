@@ -449,6 +449,12 @@ namespace FidelityFX
       return custom_data->phase_count;
    }
 
+   SR::Type FSR41::GetFallbackType(const SR::InstanceData* data) const
+   {
+      const auto* custom_data = GetData(data);
+      return custom_data && custom_data->fallback_active ? SR::Type::FSR : SR::Type::None;
+   }
+
    bool FSR41::Draw(const SR::InstanceData* data, ID3D11DeviceContext* command_list, const DrawData& draw_data)
    {
       const auto* custom_data = GetData(data);

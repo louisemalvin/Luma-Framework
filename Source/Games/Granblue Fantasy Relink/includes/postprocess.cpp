@@ -9,6 +9,39 @@ static void LogExpectedCustomDrawSkipped(const char* pass_name, const std::strin
 }
 #endif
 
+#if ENABLE_FSR41
+static bool SwitchGBFRFsr41FallbackToFsr3(DeviceData& device_data, ID3D11Device* native_device)
+{
+   if (device_data.sr_type != SR::Type::FSR4_1)
+      return false;
+
+   auto implementation_it = sr_implementations.find(SR::Type::FSR4_1);
+   auto instance_it = device_data.sr_implementations_instances.find(SR::Type::FSR4_1);
+   auto fallback_instance_it = device_data.sr_implementations_instances.find(SR::Type::FSR);
+   if (implementation_it == sr_implementations.end() || !implementation_it->second ||
+       instance_it == device_data.sr_implementations_instances.end() || !instance_it->second ||
+       fallback_instance_it == device_data.sr_implementations_instances.end() || !fallback_instance_it->second ||
+       implementation_it->second->GetFallbackType(instance_it->second) != SR::Type::FSR)
+   {
+      return false;
+   }
+
+   implementation_it->second->Deinit(instance_it->second, native_device);
+   device_data.sr_implementations_instances.erase(instance_it);
+   device_data.sr_type = SR::Type::FSR;
+   device_data.sr_suppressed = false;
+   device_data.force_reset_sr = true;
+
+   {
+      const std::unique_lock lock_reshade(s_mutex_reshade);
+      sr_user_type = SR::UserType::FSR_3;
+      reshade::set_config_value(nullptr, NAME, "SRUserType", static_cast<int>(sr_user_type));
+   }
+   reshade::log::message(reshade::log::level::warning, "Luma: FSR4.1 failed; switched Super Resolution selection to FSR 3");
+   return true;
+}
+#endif
+
 static bool CreateOrRecreateOutlineTextureIfNeeded(GameDeviceDataGBFR& game_device_data, ID3D11Device* native_device, D3D11_TEXTURE2D_DESC desc)
 {
    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
@@ -1071,9 +1104,12 @@ static void RunLatePostProcessPasses(
 
    if (device_data.sr_type != SR::Type::None && !device_data.sr_suppressed)
    {
+      ComPtr<ID3D11Device> native_device;
+      native_device_context->GetDevice(native_device.put());
+
       auto* sr_instance_data = device_data.GetSRInstanceData();
+      SR::SettingsData settings_data;
       {
-         SR::SettingsData settings_data;
          settings_data.output_width = static_cast<uint>(device_data.output_resolution.x);
          settings_data.output_height = static_cast<uint>(device_data.output_resolution.y);
          settings_data.render_width = static_cast<uint>(device_data.render_resolution.x);
@@ -1089,6 +1125,14 @@ static void RunLatePostProcessPasses(
          settings_data.render_preset = dlss_render_preset;
          sr_implementations[device_data.sr_type]->UpdateSettings(sr_instance_data, native_device_context, settings_data);
       }
+
+#if ENABLE_FSR41
+      if (SwitchGBFRFsr41FallbackToFsr3(device_data, native_device.get()))
+      {
+         sr_instance_data = device_data.GetSRInstanceData();
+         sr_implementations[device_data.sr_type]->UpdateSettings(sr_instance_data, native_device_context, settings_data);
+      }
+#endif
 
        // Prepare SR draw data
        {
@@ -1149,7 +1193,19 @@ static void RunLatePostProcessPasses(
             }
          }
 #endif
-         if (sr_implementations[device_data.sr_type]->Draw(sr_instance_data, native_device_context, draw_data))
+         bool sr_draw_succeeded = sr_implementations[device_data.sr_type]->Draw(sr_instance_data, native_device_context, draw_data);
+#if ENABLE_FSR41
+         if (SwitchGBFRFsr41FallbackToFsr3(device_data, native_device.get()))
+         {
+            if (!sr_draw_succeeded)
+            {
+               sr_instance_data = device_data.GetSRInstanceData();
+               sr_implementations[device_data.sr_type]->UpdateSettings(sr_instance_data, native_device_context, settings_data);
+               sr_draw_succeeded = sr_implementations[device_data.sr_type]->Draw(sr_instance_data, native_device_context, draw_data);
+            }
+         }
+#endif
+         if (sr_draw_succeeded)
          {
             device_data.has_drawn_sr = true;
          }

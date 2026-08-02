@@ -213,6 +213,10 @@ namespace SR
 		// Whether the implementation leaves the state dirty compared to when it begun
 		virtual bool NeedsStateRestoration() const { return false; }
 
+		// Return the backend that should become the visible selection after this
+		// implementation fails at runtime. Type::None means no transition is pending.
+		virtual Type GetFallbackType(const SR::InstanceData* data) const { return Type::None; }
+
 		virtual const char* GetBackendName(const SR::InstanceData* data) const { return "SR"; }
 	};
 }

@@ -24,6 +24,7 @@ namespace FidelityFX
 
       virtual int GetJitterPhases(const SR::InstanceData* data) const override;
       virtual bool NeedsStateRestoration() const override { return true; }
+      virtual SR::Type GetFallbackType(const SR::InstanceData* data) const override;
       virtual const char* GetBackendName(const SR::InstanceData* data) const override;
    };
 }

@@ -43,9 +43,10 @@ committed here.
 
 In a Development or Test build, select `FSR 4.1` in the Super Resolution menu.
 `Auto` intentionally continues to prefer FSR3 so existing GBFR behavior does
-not change. If FSR4.1 initialization fails, an explicit FSR4.1 selection uses
-FSR3 when available. A dispatch or resource-bridge failure switches the active
-FSR4.1 instance to its FSR3 fallback for the rest of that device lifetime.
+not change. If FSR4.1 initialization fails, an explicit FSR4.1 selection is
+persistently changed to FSR3 when available. A dispatch or resource-bridge
+failure deinitializes the failed FSR4.1 instance, switches the active backend to
+FSR3, persists the selector as FSR3, and emits a warning in `ReShade.log`.
 
 ## GBFR resource mapping
 
