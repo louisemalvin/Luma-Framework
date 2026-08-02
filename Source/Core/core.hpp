@@ -93,11 +93,14 @@
 #ifndef ENABLE_FIDELITY_SK
 #define ENABLE_FIDELITY_SK 0
 #endif // ENABLE_FIDELITY_SK
+#ifndef ENABLE_FSR41
+#define ENABLE_FSR41 0
+#endif // ENABLE_FSR41
 // Automatically define "ENABLE_SR" if any SR tech is enabled
 #ifdef ENABLE_SR
 #undef ENABLE_SR
 #endif // ENABLE_SR
-#if (defined(ENABLE_NGX) && ENABLE_NGX) || (defined(ENABLE_FIDELITY_SK) && ENABLE_FIDELITY_SK)
+#if (defined(ENABLE_NGX) && ENABLE_NGX) || (defined(ENABLE_FIDELITY_SK) && ENABLE_FIDELITY_SK) || (defined(ENABLE_FSR41) && ENABLE_FSR41)
 #define ENABLE_SR 1
 #else
 #define ENABLE_SR 0
@@ -170,6 +173,7 @@ constexpr bool OneShaderPerPipeline = true;
 
 #include "dlss/DLSS.h" // see "ENABLE_NGX"
 #include "fsr/FSR.h" // see "ENABLE_FIDELITY_SK"
+#include "fsr/FSR41.h" // see "ENABLE_FSR41"
 
 #include "includes/globals.h"
 #include "includes/debug.h"
@@ -2435,6 +2439,8 @@ namespace
       }
 
       bool selected_sr_implementation = false;
+      const bool fsr41_requested = sr_user_type == SR::UserType::FSR_4_1;
+      bool fsr41_fsr3_fallback_available = false;
       for (auto& sr_implementation : sr_implementations)
       {
          if (sr_implementation.second != nullptr)
@@ -2451,6 +2457,10 @@ namespace
             if (device_data.sr_implementations_instances[sr_implementation.first] && device_data.sr_implementations_instances[sr_implementation.first]->is_supported)
             {
                const std::shared_lock lock_reshade(s_mutex_reshade);
+               if (fsr41_requested && sr_implementation.first == SR::Type::FSR)
+               {
+                  fsr41_fsr3_fallback_available = true;
+               }
                if (!selected_sr_implementation && SR::AreTypesEqual(sr_user_type, sr_implementation.first))
                {
                   selected_sr_implementation = true; // Take the first supported selected one
@@ -2464,6 +2474,11 @@ namespace
                device_data.sr_implementations_instances.erase(sr_implementation.first);
             }
          }
+      }
+      if (!selected_sr_implementation && fsr41_requested && fsr41_fsr3_fallback_available)
+      {
+         selected_sr_implementation = true;
+         device_data.sr_type = SR::Type::FSR;
       }
       if (device_data.sr_type == SR::Type::None)
       {
@@ -12623,6 +12638,8 @@ namespace
                selected_sr_user_type = "DLSS"; break;
             case SR::UserType::FSR_3:
                selected_sr_user_type = "FSR 3"; break;
+            case SR::UserType::FSR_4_1:
+               selected_sr_user_type = "FSR 4.1"; break;
             }
 
             SR::Type sr_type = device_data.sr_type;
@@ -12672,6 +12689,9 @@ namespace
                   AddComboItem("Auto", SR::UserType::Auto, sr_auto_type, !device_data.sr_implementations_instances.empty());
                AddComboItem("DLSS", SR::UserType::DLSS, SR::Type::DLSS, device_data.sr_implementations_instances.contains(SR::Type::DLSS));
                AddComboItem("FSR 3", SR::UserType::FSR_3, SR::Type::FSR, device_data.sr_implementations_instances.contains(SR::Type::FSR));
+#if ENABLE_FSR41
+               AddComboItem("FSR 4.1", SR::UserType::FSR_4_1, SR::Type::FSR4_1, device_data.sr_implementations_instances.contains(SR::Type::FSR4_1));
+#endif
                ImGui::EndCombo();
             }
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
@@ -14567,6 +14587,9 @@ void Init(bool async)
 #endif
 #if ENABLE_FIDELITY_SK
    sr_implementations[SR::Type::FSR] = std::make_unique<FidelityFX::FSR>();
+#endif
+#if ENABLE_FSR41 && ENABLE_FIDELITY_SK
+   sr_implementations[SR::Type::FSR4_1] = std::make_unique<FidelityFX::FSR41>();
 #endif
 
    // Load settings

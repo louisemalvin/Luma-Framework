@@ -5,3 +5,5 @@
 
 #include "dlss/DLSS.cpp"
 #include "fsr/FSR.cpp"
+#include "fsr/D3D11On12Bridge.cpp"
+#include "fsr/FSR41.cpp"
