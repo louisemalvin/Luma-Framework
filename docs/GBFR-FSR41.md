@@ -71,6 +71,12 @@ The bridge fails closed if the native device lacks `ID3D11Device5` or
 Failure messages are emitted with the `FSR4.1` prefix. Development traces label
 the active path as `FSR4.1` or `FSR3 fallback`.
 
+On native Windows, the D3D11 and D3D12 adapter LUIDs must match. Under Wine or
+Proton, DXVK and VKD3D-Proton can expose different synthetic LUIDs for the same
+physical adapter, so the bridge allows that mismatch only after detecting the
+Wine runtime and only because the D3D12 device was created from the native
+D3D11 adapter object.
+
 The bridge currently uses synchronous D3D11 copies around the D3D12 dispatch.
 This is deliberate for correctness and makes bridge cost a measured result,
 not an assumption. Unsupported resource formats, device loss, alt-tab

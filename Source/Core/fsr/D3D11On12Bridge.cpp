@@ -40,6 +40,12 @@ namespace FidelityFX
             return false;
          }
       }
+
+      bool IsWineRuntime()
+      {
+         HMODULE ntdll = GetModuleHandleW(reinterpret_cast<LPCWSTR>(L"ntdll.dll"));
+         return ntdll && GetProcAddress(ntdll, "wine_get_version") != nullptr;
+      }
    }
 
    D3D11On12Bridge::~D3D11On12Bridge()
@@ -196,8 +202,15 @@ namespace FidelityFX
       if (native_adapter_desc.AdapterLuid.LowPart != d3d12_luid.LowPart ||
           native_adapter_desc.AdapterLuid.HighPart != d3d12_luid.HighPart)
       {
-         SetError("D3D11 and D3D12 adapters do not match");
-         return false;
+         // DXVK and VKD3D-Proton can expose API-specific synthetic LUIDs for
+         // the same physical adapter. The D3D12 device was still explicitly
+         // created from native_adapter. Keep the strict identity check on
+         // native Windows, where the adapter LUID is stable across APIs.
+         if (!IsWineRuntime())
+         {
+            SetError("D3D11 and D3D12 adapters do not match");
+            return false;
+         }
       }
 
       D3D12_COMMAND_QUEUE_DESC queue_desc = {};
