@@ -8287,8 +8287,14 @@ namespace
       // This happens in Dishonored 2 and Thief on boot, to update videos or splash screens.
       if (needs_conversion)
       {
-         ASSERT_ONCE(access == reshade::api::map_access::write_only || access == reshade::api::map_access::write_discard); // For now we only support write, games generally don't read back textures from the CPU if not for screenshots or for save game snapshots. Note: this happens in Shenmue 2 photo mode. It should be ok as long as we have indirect texture upgrades (the photo will be black or garbage data), otherwise we'd need to covert the data inline here!
-         ASSERT_ONCE(data && data->data); // If this is nullptr, it might be a "ID3D11DeviceContext3::WriteToSubresource", which we don't support!
+         const bool writable_map = access == reshade::api::map_access::write_only || access == reshade::api::map_access::write_discard;
+         if (!writable_map || data == nullptr || data->data == nullptr)
+         {
+            // The conversion path below only supports CPU writes. Leave read-only
+            // and WriteToSubresource maps untracked so the native map can proceed
+            // without changing its row pitch or trying to convert it on unmap.
+            return;
+         }
 
          upgraded_mapped_resources[resource.handle] = data;
 
