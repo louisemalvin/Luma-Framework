@@ -1,6 +1,8 @@
 name: GBFR FSR4.1 Build
 
 on:
+  push:
+    branches: [fsr41-d3d11on12]
   pull_request:
     branches: [main]
   workflow_dispatch:
