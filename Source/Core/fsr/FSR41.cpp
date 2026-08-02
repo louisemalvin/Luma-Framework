@@ -479,8 +479,14 @@ namespace FidelityFX
       }
 
       auto* mutable_data = const_cast<FSR41InstanceData*>(custom_data);
-      if (!custom_data->has_context ||
-          !mutable_data->bridge.BeginFrame(
+      if (!custom_data->has_context)
+      {
+         LogFsr41("FSR4.1 frame rejected: context is not initialized");
+         return ActivateFallback(*mutable_data, command_list, custom_data->settings_data) &&
+                DispatchFallback(*mutable_data, command_list, draw_data);
+      }
+
+      if (!mutable_data->bridge.BeginFrame(
              command_list,
              draw_data.source_color,
              draw_data.depth_buffer,
@@ -488,6 +494,13 @@ namespace FidelityFX
              draw_data.exposure,
              draw_data.output_color))
       {
+         LogFsr41(
+            "FSR4.1 D3D11On12 BeginFrame failed: %s (color=%p depth=%p motion=%p output=%p)",
+            mutable_data->bridge.GetLastError(),
+            draw_data.source_color,
+            draw_data.depth_buffer,
+            draw_data.motion_vectors,
+            draw_data.output_color);
          if (custom_data->has_context)
          {
             mutable_data->bridge.AbortFrame();
@@ -498,6 +511,7 @@ namespace FidelityFX
 
       if (!mutable_data->bridge.TransitionForDispatch())
       {
+         LogFsr41("FSR4.1 D3D11On12 transition failed: %s", mutable_data->bridge.GetLastError());
          mutable_data->bridge.AbortFrame();
          return ActivateFallback(*mutable_data, command_list, custom_data->settings_data) &&
                 DispatchFallback(*mutable_data, command_list, draw_data);
