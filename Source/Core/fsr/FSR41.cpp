@@ -191,6 +191,8 @@ namespace FidelityFX
       {
          Provider provider;
          D3D11On12Bridge bridge;
+         Microsoft::WRL::ComPtr<ID3D11Device> native_device;
+         Microsoft::WRL::ComPtr<IDXGIAdapter> native_adapter;
          FSR fallback;
          SR::InstanceData* fallback_data = nullptr;
 
@@ -294,11 +296,8 @@ namespace FidelityFX
          return false;
       }
 
-      if (!custom_data->bridge.Initialize(device, adapter))
-      {
-         LogFsr41("FSR4.1 initialization skipped: %s", custom_data->bridge.GetLastError());
-         return false;
-      }
+      custom_data->native_device = device;
+      custom_data->native_adapter = adapter;
 
       if (!custom_data->provider.Load())
       {
@@ -358,6 +357,14 @@ namespace FidelityFX
       if (custom_data->has_context && custom_data->settings_data == settings_data)
       {
          return true;
+      }
+
+      if (!custom_data->bridge.IsInitialized() &&
+          !custom_data->bridge.Initialize(custom_data->native_device.Get(), custom_data->native_adapter.Get()))
+      {
+         LogFsr41("FSR4.1 bridge initialization failed: %s", custom_data->bridge.GetLastError());
+         custom_data->settings_data = settings_data;
+         return ActivateFallback(*custom_data, command_list, settings_data);
       }
 
       DestroyContext(*custom_data);
